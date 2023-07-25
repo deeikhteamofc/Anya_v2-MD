@@ -1,29 +1,22 @@
-FROM node:lts-buster
+# Use a smaller base image for optimization
+FROM node:14-slim
 
 RUN apt-get update && \
-  apt-get install -y \
-  ffmpeg \
-  imagemagick \
-  webp && \
-  apt-get upgrade -y && \
-  rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends ffmpeg && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-COPY package.json .
+ENV YARN_CACHE_FOLDER /root/.cache/yarn
 
-RUN yarn global add npm
+WORKDIR /usr/src/app
 
-RUN yarn global add yarn
-
-RUN yarn global add pm2
-
-RUN yarn global add forever
-
-RUN yarn install
-
-RUN rm -rf yarn*
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile
 
 COPY . .
 
-RUN yarn install
+# Expose the application port
+EXPOSE 8000
 
-CMD ["node", "Anyaindex.js"]
+# Start the application
+CMD ["yarn", "start"]
